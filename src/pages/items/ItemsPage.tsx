@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Package, Plus, Search } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import supabase from '../../lib/supabase';
 import type { Database } from '../../types/database.types';
 
 type Item = Database['public']['Tables']['items']['Row'];

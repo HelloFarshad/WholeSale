@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
-import { Menu, Bell, User, LogOut, Settings } from 'lucide-react';
+import { Menu, Bell, User, LogOut, Settings, Package } from 'lucide-react';
 
 interface TopBarProps {
   onMenuClick: () => void;

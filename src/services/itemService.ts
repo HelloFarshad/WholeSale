@@ -44,8 +44,8 @@ export const getItems = async (params?: QueryParams): Promise<PaginatedResponse<
     // Transform the data to match our Item type
     const items = data.map(item => ({
       ...item,
-      category: item.item_categories,
-      unit: item.units,
+      category: { id: item.item_categories.id, name: item.item_categories.name }, // Ensure 'id' is included
+      unit: { name: item.units.name, conversion_to_base: item.units.conversion_to_base }, // Ensure proper structure
     })) as Item[];
     
     return {
@@ -76,8 +76,8 @@ export const getItemById = async (id: string): Promise<Item> => {
     // Transform the data to match our Item type
     const item = {
       ...data,
-      category: data.item_categories,
-      unit: data.units,
+      category: { id: data.item_categories.id, name: data.item_categories.name }, // Ensure 'id' is included
+      unit: { name: data.units.name, conversion_to_base: data.units.conversion_to_base }, // Ensure proper structure
     } as Item;
     
     // Get current stock
@@ -86,7 +86,7 @@ export const getItemById = async (id: string): Promise<Item> => {
       p_warehouse_id: null, // null to get total stock across all warehouses
     });
     
-    item.current_stock = stockData || 0;
+    item.current_stock = stockData || '0'; // Ensure type compatibility with string
     
     return item;
   } catch (error) {

@@ -26,7 +26,13 @@ const AuthContext = createContext<AuthContextType>({
   updateUser: async () => {},
 });
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -38,6 +44,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
 
   const checkUser = useCallback(async () => {
+    console.log('Checking user session...');
     try {
       setIsLoading(true);
       setError(null);
@@ -65,6 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setError(err instanceof Error ? err.message : 'An unknown error occurred');
       setUser(null);
     } finally {
+      console.log('User session check complete');
       setIsLoading(false);
     }
   }, []);
@@ -83,7 +91,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         throw authError;
       }
       
-      await checkUser();
+      await checkUser(); // Check and set the user after login
     } catch (err) {
       console.error('Login error:', err);
       setError(err instanceof Error ? err.message : 'Invalid login credentials');
@@ -204,21 +212,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Listen for auth changes
   React.useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        if (session) {
-          await checkUser();
-        } else {
-          setUser(null);
-        }
+    const handleEvent = (event: string, session: { user: { id: string } } | null) => { // Explicitly type 'event' and 'session'
+      if (session) {
+        checkUser();
+      } else {
+        setUser(null);
       }
-    );
+    };
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(handleEvent);
 
     // Check for initial session
     checkUser();
 
     return () => {
-      subscription.unsubscribe();
+      subscription?.unsubscribe(); // Ensure proper cleanup
     };
   }, [checkUser]);
 

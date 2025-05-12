@@ -31,8 +31,8 @@ const LoginPage: React.FC = () => {
   const onSubmit = async (data: LoginFormValues) => {
     try {
       setIsLoading(true);
-      await login({ email: data.email, password: data.password });
-      navigate('/dashboard');
+      await login({ email: data.email, password: data.password }); // Login function is called
+      navigate('/dashboard'); // Navigate to the dashboard after successful login
     } catch (error) {
       addNotification({
         type: 'error',

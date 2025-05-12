@@ -1,40 +1,12 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
-import { Database } from '../types/database.types';
+import { createClient } from '@supabase/supabase-js';
 
-// These would normally be in environment variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || '';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || '';
+const supabaseUrl = 'https://uoblqdheayshyfilnynd.supabase.co'; // Your Supabase project URL
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVvYmxxZGhlYXlzaHlmaWxueW5kIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY5NjI1ODgsImV4cCI6MjA2MjUzODU4OH0.B6QqISqJf8qXZn-7Bjl1D4Yf4XX6aAgb7mz6DTgH_I4'; // Your anon public API key
 
-let supabase: SupabaseClient<Database>;
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error('supabaseUrl and supabaseKey are required to initialize Supabase');
+}
 
-/**
- * Initialize the Supabase client
- */
-export const initSupabase = (): SupabaseClient<Database> => {
-  if (!supabaseUrl || !supabaseAnonKey) {
-    throw new Error('Supabase URL and anon key must be provided');
-  }
-  
-  if (!supabase) {
-    supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      auth: {
-        persistSession: true,
-        storage: localStorage
-      }
-    });
-  }
-  
-  return supabase;
-};
+const supabase = createClient(supabaseUrl, supabaseKey);
 
-/**
- * Get the Supabase client instance
- */
-export const getSupabaseClient = (): SupabaseClient<Database> => {
-  if (!supabase) {
-    return initSupabase();
-  }
-  return supabase;
-};
-
-export default getSupabaseClient();
+export default supabase;

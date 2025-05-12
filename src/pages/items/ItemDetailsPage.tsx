@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save } from 'lucide-react';
-import { supabase } from '../../lib/supabase';
+import supabase from '../../lib/supabase'; // Use default import
 import type { Database } from '../../types/database.types';
 
 type Item = Database['public']['Tables']['items']['Row'];

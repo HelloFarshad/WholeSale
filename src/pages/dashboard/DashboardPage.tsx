@@ -25,14 +25,42 @@ import {
   Legend
 } from 'recharts';
 
+// Define types for state variables
+interface StockAlert {
+  item_id: string;
+  warehouse_id: string;
+  current_stock: number;
+  items: { name: string };
+  warehouses: { name: string };
+}
+
+interface SalesData {
+  date: string;
+  amount: number;
+}
+
+interface RecentSale {
+  id: string;
+  created_at: string;
+  total_amount: number;
+  customers: { name: string };
+}
+
+interface RecentPurchase {
+  id: string;
+  order_date: string;
+  total_amount: number;
+  suppliers: { name: string };
+}
+
 const DashboardPage: React.FC = () => {
   const { user } = useAuth();
   const [isLoading, setIsLoading] = useState(true);
-  const [stockAlerts, setStockAlerts] = useState([]);
-  const [salesData, setSalesData] = useState([]);
+  const [stockAlerts, setStockAlerts] = useState<StockAlert[]>([]);
+  const [salesData, setSalesData] = useState<SalesData[]>([]);
   const [topSellingItems, setTopSellingItems] = useState([]);
-  const [recentSales, setRecentSales] = useState([]);
-  const [recentPurchases, setRecentPurchases] = useState([]);
+  const [recentSales, setRecentSales] = useState<RecentSale[]>([]);
+  const [recentPurchases, setRecentPurchases] = useState<RecentPurchase[]>([]);
   const [statistics, setStatistics] = useState({
     totalItems: 0,
     totalCustomers: 0,
@@ -47,12 +75,12 @@ const DashboardPage: React.FC = () => {
         // Stock Alerts
         const { data: stockData, error: stockError } = await supabase
           .from('current_stock_by_item_and_warehouse')
-          .select('item_id, warehouse_id, current_stock, items:item_id(name), warehouses:warehouse_id(name)')
+          .select('item_id, warehouse_id, current_stock, items(name), warehouses(name)')
           .lt('current_stock', 10)
           .limit(5);
           
         if (stockError) throw stockError;
-        setStockAlerts(stockData);
+        setStockAlerts(stockData || []);
 
         // Sales Performance (Last 30 days)
         const thirtyDaysAgo = new Date();
@@ -67,14 +95,14 @@ const DashboardPage: React.FC = () => {
         if (salesError) throw salesError;
         
         // Group sales by day
-        const groupedSales = salesData.reduce((acc, curr) => {
+        const groupedSales: Record<string, SalesData> = salesData?.reduce((acc, curr) => {
           const date = new Date(curr.created_at).toLocaleDateString();
           if (!acc[date]) {
             acc[date] = { date, amount: 0 };
           }
           acc[date].amount += curr.total_amount;
           return acc;
-        }, {});
+        }, {} as Record<string, SalesData>);
         
         setSalesData(Object.values(groupedSales));
 
@@ -95,7 +123,7 @@ const DashboardPage: React.FC = () => {
           .limit(5);
           
         if (recentSalesError) throw recentSalesError;
-        setRecentSales(recentSalesData);
+        setRecentSales(recentSalesData || []);
 
         // Recent Purchases
         const { data: recentPurchasesData, error: recentPurchasesError } = await supabase
@@ -105,30 +133,30 @@ const DashboardPage: React.FC = () => {
           .limit(5);
           
         if (recentPurchasesError) throw recentPurchasesError;
-        setRecentPurchases(recentPurchasesData);
+        setRecentPurchases(recentPurchasesData || []);
 
         // Statistics
         const [
           { count: totalItems }, 
           { count: totalCustomers },
-          { sum: totalSales },
-          { sum: totalPurchases }
+          totalSalesData,
+          totalPurchasesData
         ] = await Promise.all([
           supabase.from('items').select('*', { count: 'exact', head: true }),
           supabase.from('customers').select('*', { count: 'exact', head: true }),
-          supabase.from('sales_orders').select('total_amount').limit(1).then(({ data }) => ({
-            sum: data.reduce((sum, order) => sum + order.total_amount, 0)
+          supabase.from('sales_orders').select('total_amount').then(({ data }) => ({
+            sum: data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0
           })),
-          supabase.from('purchase_orders').select('total_amount').limit(1).then(({ data }) => ({
-            sum: data.reduce((sum, order) => sum + order.total_amount, 0)
+          supabase.from('purchase_orders').select('total_amount').then(({ data }) => ({
+            sum: data?.reduce((sum, order) => sum + (order.total_amount || 0), 0) || 0
           }))
         ]);
 
         setStatistics({
           totalItems: totalItems || 0,
           totalCustomers: totalCustomers || 0,
-          totalSales: totalSales || 0,
-          totalPurchases: totalPurchases || 0
+          totalSales: totalSalesData.sum || 0,
+          totalPurchases: totalPurchasesData.sum || 0
         });
 
       } catch (error) {
